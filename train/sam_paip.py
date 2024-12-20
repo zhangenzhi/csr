@@ -12,14 +12,41 @@ import numpy as np
 import matplotlib.pyplot as plt
 import math
 
-from apt.quadtree import FixedQuadTree
+from map.quadtree import FixedQuadTree
 from model.sam import SAMQDT
 from dataset.paip import PAIPAP
-from utils.focal_loss import DiceBLoss
 
 import torch.multiprocessing
 torch.multiprocessing.set_sharing_strategy('file_system')
 
+class DiceBLoss(nn.Module):
+    def __init__(self, weight=0.5, num_class=2, size_average=True):
+        super(DiceBLoss, self).__init__()
+        self.weight = weight
+        self.num_class = num_class
+
+    def forward(self, inputs, targets, smooth=1, act=True):
+        
+        #comment out if your model contains a sigmoid or equivalent activation layer
+        if act:
+            inputs = F.sigmoid(inputs)       
+        
+        # pred = torch.flatten(inputs)
+        # true = torch.flatten(targets)
+        
+        # #flatten label and prediction tensors
+        pred = torch.flatten(inputs[:,1:,:,:])
+        true = torch.flatten(targets[:,1:,:,:])
+        
+        intersection = (pred * true).sum()
+        coeff = (2.*intersection + smooth)/(pred.sum() + true.sum() + smooth)                                        
+        dice_loss = 1 - (2.*intersection + smooth)/(pred.sum() + true.sum() + smooth)  
+        BCE = F.binary_cross_entropy(pred, true, reduction='mean')
+        dice_bce = self.weight*BCE + (1-self.weight)*dice_loss
+        # dice_bce = dice_loss 
+        
+        return dice_bce
+    
 def dice_score(inputs, targets, smooth=1):
     inputs = F.sigmoid(inputs)       
     
