@@ -299,7 +299,7 @@ if __name__ == '__main__':
                         help='length of sequence.')
     parser.add_argument('--patch_size', default=16, type=int,
                         help='patch size.')
-    parser.add_argument('--pretrain', default="sam", type=str,
+    parser.add_argument('--pretrain', default="sam-b", type=str,
                         help='Use SAM pretrained weigths.')
     parser.add_argument('--reload', default=True, type=bool,
                         help='Use SAM pretrained weigths.')
