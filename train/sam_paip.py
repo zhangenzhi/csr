@@ -263,13 +263,13 @@ def sub_trans_plot(image, mask, qmasks, pred_mask, qdt_info, fixed_length, bi, e
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--dataset', type=str,  default="paip", help='name of the dataset.')
-    parser.add_argument('--data_dir', default="./dataset/paip/output_images_and_masks", 
+    parser.add_argument('--data_dir', default="../dataset/paip/output_images_and_masks", 
                         help='base path of dataset.')
-    parser.add_argument('--resolution', default=512, type=int,
+    parser.add_argument('--resolution', default=8192, type=int,
                         help='resolution of img.')
-    parser.add_argument('--fixed_length', default=512, type=int,
+    parser.add_argument('--fixed_length', default=1024, type=int,
                         help='length of sequence.')
-    parser.add_argument('--patch_size', default=8, type=int,
+    parser.add_argument('--patch_size', default=16, type=int,
                         help='patch size.')
     parser.add_argument('--pretrain', default="sam", type=str,
                         help='Use SAM pretrained weigths.')
@@ -279,7 +279,7 @@ if __name__ == '__main__':
                         help='Epoch of training.')
     parser.add_argument('--batch_size', default=4, type=int,
                         help='Batch_size for training')
-    parser.add_argument('--savefile', default="./sam-trans",
+    parser.add_argument('--savefile', default="./sam-paip-ap",
                         help='save visualized and loss filename')
     args = parser.parse_args()
 
