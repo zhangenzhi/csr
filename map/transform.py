@@ -13,7 +13,7 @@ class Patchify(torch.nn.Module):
         self.cannys = [x for x in range(cannys[0], cannys[1], 1)]
         self.patch_size = patch_size
         
-    def forward(self, img):  # we assume inputs are always structured like this
+    def forward(self, img, mask):  # we assume inputs are always structured like this
         # Do some transformations. Here, we're just passing though the input
         
         self.smooth_factor = random.choice(self.sths)
@@ -32,5 +32,9 @@ class Patchify(torch.nn.Module):
         seq_size = np.asarray(seq_size)
         seq_img = np.asarray(seq_img)
         seq_img = np.reshape(seq_img, [self.patch_size*self.patch_size, -1, 3])
+        
+        seq_mask = qdt.serialize(mask, size=(self.patch_size, self.patch_size, 1))
+        seq_mask = np.asarray(seq_mask)
+        seq_mask = np.reshape(seq_mask, [self.patch_size, -1, 1])
 
-        return seq_img, seq_size, seq_pos
+        return seq_img, seq_mask, qdt
