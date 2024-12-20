@@ -2,11 +2,9 @@ import os
 import sys
 sys.path.append("./")
 import argparse
-from pathlib import Path
+import time
 import torch
-import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import random_split
 from torch.utils.data.dataset import Subset
 from torch.utils.data import DataLoader
 import torch.nn.functional as F
@@ -14,15 +12,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import math
 
-from model.apt import APT
 from apt.quadtree import FixedQuadTree
 from model.sam import SAMQDT
-from model.unet import Unet
-from dataset.paip_trans import PAIPTrans
-from utils.draw import draw_loss, sub_paip_plot
-from utils.focal_loss import DiceBCELoss, DiceBLoss
-from monai.losses import DiceLoss
-# from dataset.paip_mqdt import PAIPQDTDataset
+from dataset.paip import PAIPAP
+from utils.focal_loss import DiceBLoss
 
 import torch.multiprocessing
 torch.multiprocessing.set_sharing_strategy('file_system')
@@ -87,7 +80,7 @@ def main(args):
     
     # Split the dataset into train, validation, and test sets
     data_path = args.data_dir
-    dataset = PAIPTrans(data_path, args.resolution, fixed_length=args.fixed_length, patch_size=patch_size, normalize=False)
+    dataset = PAIPAP(data_path, args.resolution, fixed_length=args.fixed_length, patch_size=patch_size, normalize=False)
     dataset_size = len(dataset)
     train_size = int(0.85 * dataset_size)
     val_size = dataset_size - train_size
@@ -98,9 +91,8 @@ def main(args):
     val_indices = list(range(train_size, dataset_size))
     train_set = Subset(dataset, train_indices)
     val_set = test_set = Subset(dataset, val_indices)
-    # train_set, val_set, test_set = random_split(dataset, [train_size, val_size, test_size])
 
-    train_loader = DataLoader(train_set, batch_size=args.batch_size, num_workers=0, shuffle=True)
+    train_loader = DataLoader(train_set, batch_size=args.batch_size, num_workers=32, shuffle=True)
     val_loader = DataLoader(val_set, batch_size=args.batch_size, shuffle=False)
     test_loader = DataLoader(test_set, batch_size=args.batch_size, shuffle=False)
 
@@ -110,8 +102,7 @@ def main(args):
     val_losses = []
     output_dir = args.savefile  # Change this to the desired directory
     os.makedirs(output_dir, exist_ok=True)
-    import time
-    import random
+
     for epoch in range(num_epochs):
         model.train()
         epoch_train_loss = 0.0
@@ -205,7 +196,6 @@ def main(args):
     test_loss /= len(test_loader)
     epoch_test_score /= len(test_loader)
     logging.info(f"Test Loss: {test_loss:.4f}, Test Score: {epoch_test_score:.4f}")
-    draw_loss(output_dir=output_dir)
 
 def sub_trans_plot(image, mask, qmasks, pred_mask, qdt_info, fixed_length, bi, epoch, output_dir):
     true_score = 0 
