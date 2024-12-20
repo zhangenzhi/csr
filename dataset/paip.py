@@ -157,8 +157,8 @@ if __name__ == "__main__":
     # dataset = PAIPTrans(args.datapath, args.resolution)
     # dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True)
 
-    data_dir="../paip/output_images_and_masks"
-    resolution=512
+    data_dir="../dataset/paip/output_images_and_masks"
+    resolution=8192
     dataset = PAIPAP(data_dir, resolution, fixed_length=1024)
     dataloader = DataLoader(dataset, batch_size=4, shuffle=True)
     
