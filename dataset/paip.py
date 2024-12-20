@@ -11,7 +11,7 @@ from torchvision import transforms
 from torchvision.transforms import v2
 import matplotlib.pyplot as plt
 import torch.nn.functional as F
-from map.transforms import Patchify
+from map.transform import Patchify
 
 # Set the flag to load truncated images
 ImageFile.LOAD_TRUNCATED_IMAGES = True
