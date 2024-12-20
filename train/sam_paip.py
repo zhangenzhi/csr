@@ -4,6 +4,7 @@ sys.path.append("./")
 import argparse
 import time
 import torch
+import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data.dataset import Subset
 from torch.utils.data import DataLoader
