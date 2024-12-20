@@ -120,7 +120,7 @@ def main(args):
     train_set = Subset(dataset, train_indices)
     val_set = test_set = Subset(dataset, val_indices)
 
-    train_loader = DataLoader(train_set, batch_size=args.batch_size, num_workers=32, shuffle=True)
+    train_loader = DataLoader(train_set, batch_size=args.batch_size, num_workers=0, shuffle=True)
     val_loader = DataLoader(val_set, batch_size=args.batch_size, shuffle=False)
     test_loader = DataLoader(test_set, batch_size=args.batch_size, shuffle=False)
 
@@ -137,7 +137,7 @@ def main(args):
         start_time = time.time()
         for batch in train_loader:
             # with torch.autocast(device_type='cuda', dtype=torch.float16):
-            _, qimages, _, qmasks, _, qdt_value = batch
+            _, qimages, _, qmasks, _ = batch
             qimages = torch.reshape(qimages,shape=(-1,3,patch_size*sqrt_len, patch_size*sqrt_len))
             qmasks = torch.reshape(qmasks,shape=(-1,num_class,patch_size*sqrt_len, patch_size*sqrt_len))
             qimages, qmasks = qimages.to(device), qmasks.to(device)  # Move data to GPU
@@ -167,7 +167,7 @@ def main(args):
         with torch.no_grad():
             for bi,batch in enumerate(val_loader):
                 # with torch.autocast(device_type='cuda', dtype=torch.float16):
-                image, qimages, mask, qmasks, qdt_info, qdt_value = batch
+                image, qimages, mask, qmasks, qdt_info = batch
                 seq_shape = qmasks.shape
                 qimages = torch.reshape(qimages,shape=(-1,3,patch_size*sqrt_len, patch_size*sqrt_len))
                 qmasks = torch.reshape(qmasks,shape=(-1,num_class,patch_size*sqrt_len, patch_size*sqrt_len))
