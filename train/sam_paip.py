@@ -175,13 +175,13 @@ def main(args):
                 outputs = model(qimages)
                 loss = criterion(outputs, qmasks)
                 score = dice_score(outputs, qmasks)
-                if  (epoch - 1) % 10 == 9:  # Adjust the frequency of visualization
-                    outputs = torch.reshape(outputs, seq_shape)
-                    qmasks = torch.reshape(qmasks, seq_shape)
-                    qdt_score, qmask_score = sub_trans_plot(image, mask, qmasks=qmasks, pred_mask=outputs, qdt_info=qdt_info, 
-                                               fixed_length=args.fixed_length, bi=bi, epoch=epoch, output_dir=args.savefile)
-                    epoch_qdt_score += qdt_score.item()
-                    epoch_qmask_score += qmask_score.item()
+                # if  (epoch - 1) % 10 == 9:  # Adjust the frequency of visualization
+                #     outputs = torch.reshape(outputs, seq_shape)
+                #     qmasks = torch.reshape(qmasks, seq_shape)
+                    # qdt_score, qmask_score = sub_trans_plot(image, mask, qmasks=qmasks, pred_mask=outputs, qdt_info=qdt_info, 
+                    #                            fixed_length=args.fixed_length, bi=bi, epoch=epoch, output_dir=args.savefile)
+                    # epoch_qdt_score += qdt_score.item()
+                    # epoch_qmask_score += qmask_score.item()
                 epoch_val_loss += loss.item()
                 epoch_val_score += score.item()
 
