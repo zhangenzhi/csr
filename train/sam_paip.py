@@ -98,7 +98,7 @@ def main(args):
     best_val_score = 0.0
     
     # Move the model to GPU
-    model = nn.DataParallel(model)
+    # model = nn.DataParallel(model)
     model.to(device)
     if args.reload:
         if os.path.exists(os.path.join(args.savefile, "best_score_model.pth")):
