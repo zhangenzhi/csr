@@ -98,19 +98,11 @@ def main(args):
     
     # Split the dataset into train, validation, and test sets
     data_path = args.data_dir
-    dataset = S8DAP(data_path, args.resolution, fixed_length=args.fixed_length, patch_size=patch_size, normalize=False)
+    dataset = S8DAP(data_path, args.resolution, fixed_length=args.fixed_length, patch_size=patch_size)
     dataset_size = len(dataset)
-    train_size = int(0.85 * dataset_size)
-    val_size = dataset_size - train_size
-    test_size = val_size
-    logging.info("train_size:{}, val_size:{}, test_size:{}".format(train_size, val_size, test_size))
-    
-    train_indices = list(range(0, train_size))
-    val_indices = list(range(train_size, dataset_size))
-    train_set = Subset(dataset, train_indices)
-    val_set = test_set = Subset(dataset, val_indices)
+    print("dataset size:", dataset_size)
 
-    train_loader = DataLoader(train_set, batch_size=args.batch_size, num_workers=0, shuffle=True)
+    train_loader = DataLoader(dataset, batch_size=args.batch_size, num_workers=0, shuffle=True)
 
     # Training loop
     num_epochs = args.epoch
@@ -122,11 +114,12 @@ def main(args):
         model.train()
         for batch in train_loader:
             # with torch.autocast(device_type='cuda', dtype=torch.float16):
-            image, qimages = batch
-            qimages = torch.reshape(qimages,shape=(-1,1,patch_size*sqrt_len, patch_size*sqrt_len))
-            qimages = qimages.to(device)  # Move data to GPU
+            image, seq_img = batch
+            seq_img = torch.reshape(seq_img,shape=(-1,1,patch_size*sqrt_len, patch_size*sqrt_len))
+            seq_img = seq_img.to(device)  # Move data to GPU
         
-            outputs = model(qimages)
+            outputs = model(seq_img)
+            print(outputs.shape)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
