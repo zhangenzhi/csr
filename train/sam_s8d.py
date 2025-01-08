@@ -101,7 +101,7 @@ def main(args):
     data_path = args.data_dir
     dataset = S8DAP(data_path, args.resolution, fixed_length=args.fixed_length, patch_size=patch_size)
     dataset_size = len(dataset)
-    print("dataset size:", dataset_size)
+    print(f"dataset size:{dataset_size}, device:{device}")
 
     train_loader = DataLoader(dataset, batch_size=args.batch_size, num_workers=0, shuffle=True)
 
@@ -118,9 +118,9 @@ def main(args):
             image, seq_img = batch
             seq_img = torch.reshape(seq_img,shape=(-1,1, patch_size*sqrt_len, patch_size*sqrt_len))
             seq_img = seq_img.to(device)  # Move data to GPU
-            print("seq_img:", seq_img.shape)
+            print(f"seq_img:{seq_img.shape}")
             outputs = model(seq_img)
-            print("outputs:", outputs.shape)
+            print(f"outputs:{outputs.shape}")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

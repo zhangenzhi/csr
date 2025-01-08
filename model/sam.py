@@ -164,11 +164,11 @@ class SAMQDT(nn.Module):
                 self.mask_header = nn.Sequential(nn.Conv2d(256, output_dim, 1))
                 
     def forward(self, x):
-        # print(x.shape)
+        print(x.shape)
         x = self.transformer(x) 
-        # print("vit shape:",x.shape)
+        print("vit shape:",x.shape)
         x = self.mask_header(x)
-        # print("mask shape:",x.shape)
+        print("mask shape:",x.shape)
         return x
 
 class SAM3D(nn.Module):
