@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Tuple, Type
 from model.vit import ImageEncoderViT
 from model.vit import LayerNorm2d
 
-def build_sam_vit_b(patch_size=8, image_size=[512, 512], pretrain=True, qdt=False,):
+def build_sam_vit_b(patch_size=8, image_size=[512, 512], pretrain=True, qdt=False, in_chans = 3,):
     return _build_sam_vit(
         encoder_embed_dim=768,
         encoder_depth=12,
@@ -15,6 +15,7 @@ def build_sam_vit_b(patch_size=8, image_size=[512, 512], pretrain=True, qdt=Fals
         encoder_global_attn_indexes=[2, 5, 8, 11],
         patch_size=patch_size,
         image_size=image_size,
+        in_chans = in_chans,
         pretrain=pretrain,
         qdt=qdt,
     )
@@ -51,6 +52,7 @@ def _build_sam_vit(
     encoder_global_attn_indexes,
     patch_size,
     image_size,
+    in_chans = 3,
     pretrain =True,
     qdt=False,
 ):
@@ -71,6 +73,7 @@ def _build_sam_vit(
             use_rel_pos=False,
             global_attn_indexes=encoder_global_attn_indexes,
             window_size=14,
+            in_chans = in_chans,
             out_chans=prompt_embed_dim,
             pretrain=pretrain,
             qdt=qdt,
@@ -122,15 +125,17 @@ class SAM(nn.Module):
         return x
 
 class SAMQDT(nn.Module):
-    def __init__(self, image_shape=(4*32, 4*32), 
+    def __init__(self, 
+                 image_shape=(4*32, 4*32), 
                  patch_size=4,
-                 output_dim=1, 
+                 output_dim=1,
+                 in_chans=3,  
                  pretrain="sam-b",
                  qdt=False):
         super().__init__()
         self.patch_size = patch_size
         if pretrain== "sam-b":
-            self.transformer = build_sam_vit_b(patch_size=self.patch_size, image_size=image_shape, qdt=qdt)
+            self.transformer = build_sam_vit_b(patch_size=self.patch_size, image_size=image_shape, qdt=qdt, in_chans=in_chans)
         elif pretrain== "sam-l":
             self.transformer = build_sam_vit_l(patch_size=self.patch_size, image_size=image_shape, qdt=qdt)
         elif pretrain=="sam-h":
@@ -159,11 +164,11 @@ class SAMQDT(nn.Module):
                 self.mask_header = nn.Sequential(nn.Conv2d(256, output_dim, 1))
                 
     def forward(self, x):
-        # print(x.shape)
+        print(x.shape)
         x = self.transformer(x) 
-        # print("vit shape:",x.shape)
+        print("vit shape:",x.shape)
         x = self.mask_header(x)
-        # print("mask shape:",x.shape)
+        print("mask shape:",x.shape)
         return x
 
 class SAM3D(nn.Module):

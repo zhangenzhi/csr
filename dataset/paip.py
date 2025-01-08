@@ -11,7 +11,7 @@ from torchvision import transforms
 from torchvision.transforms import v2
 import matplotlib.pyplot as plt
 import torch.nn.functional as F
-from map.transforms import Patchify
+from map.transform import Patchify
 
 # Set the flag to load truncated images
 ImageFile.LOAD_TRUNCATED_IMAGES = True
@@ -132,7 +132,7 @@ class PAIPAP(Dataset):
         qdt_info = qdt.encode_nodes()
         qdt_value = qdt.nodes_value()
         
-        return image, qdt_img, mask, qdt_mask, qdt_info, torch.Tensor(qdt_value)
+        return image, qdt_img, mask, qdt_mask, qdt_info
 
     
 if __name__ == "__main__":
@@ -157,12 +157,12 @@ if __name__ == "__main__":
     # dataset = PAIPTrans(args.datapath, args.resolution)
     # dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True)
 
-    data_dir="../paip/output_images_and_masks"
-    resolution=512
+    data_dir="../dataset/paip/output_images_and_masks"
+    resolution=8192
     dataset = PAIPAP(data_dir, resolution, fixed_length=1024)
     dataloader = DataLoader(dataset, batch_size=4, shuffle=True)
     
     # Now you can iterate over the dataloader to get batches of images and masks
     for batch in dataloader:
-        images, qdt, masks, _, _ = batch
-        print(images.shape, qdt.shape, masks.shape)
+        image, qdt_img, mask, qdt_mask, qdt_info = batch
+        print(image.shape, qdt_img.shape, mask.shape, qdt_mask.shape)

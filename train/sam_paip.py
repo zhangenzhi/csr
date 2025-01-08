@@ -2,11 +2,10 @@ import os
 import sys
 sys.path.append("./")
 import argparse
-from pathlib import Path
+import time
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import random_split
 from torch.utils.data.dataset import Subset
 from torch.utils.data import DataLoader
 import torch.nn.functional as F
@@ -14,19 +13,41 @@ import numpy as np
 import matplotlib.pyplot as plt
 import math
 
-from model.apt import APT
-from apt.quadtree import FixedQuadTree
+from map.quadtree import FixedQuadTree
 from model.sam import SAMQDT
-from model.unet import Unet
-from dataset.paip_trans import PAIPTrans
-from utils.draw import draw_loss, sub_paip_plot
-from utils.focal_loss import DiceBCELoss, DiceBLoss
-from monai.losses import DiceLoss
-# from dataset.paip_mqdt import PAIPQDTDataset
+from dataset.paip import PAIPAP
 
 import torch.multiprocessing
 torch.multiprocessing.set_sharing_strategy('file_system')
 
+class DiceBLoss(nn.Module):
+    def __init__(self, weight=0.5, num_class=2, size_average=True):
+        super(DiceBLoss, self).__init__()
+        self.weight = weight
+        self.num_class = num_class
+
+    def forward(self, inputs, targets, smooth=1, act=True):
+        
+        #comment out if your model contains a sigmoid or equivalent activation layer
+        if act:
+            inputs = F.sigmoid(inputs)       
+        
+        # pred = torch.flatten(inputs)
+        # true = torch.flatten(targets)
+        
+        # #flatten label and prediction tensors
+        pred = torch.flatten(inputs[:,1:,:,:])
+        true = torch.flatten(targets[:,1:,:,:])
+        
+        intersection = (pred * true).sum()
+        coeff = (2.*intersection + smooth)/(pred.sum() + true.sum() + smooth)                                        
+        dice_loss = 1 - (2.*intersection + smooth)/(pred.sum() + true.sum() + smooth)  
+        BCE = F.binary_cross_entropy(pred, true, reduction='mean')
+        dice_bce = self.weight*BCE + (1-self.weight)*dice_loss
+        # dice_bce = dice_loss 
+        
+        return dice_bce
+    
 def dice_score(inputs, targets, smooth=1):
     inputs = F.sigmoid(inputs)       
     
@@ -77,6 +98,7 @@ def main(args):
     best_val_score = 0.0
     
     # Move the model to GPU
+    # model = nn.DataParallel(model)
     model.to(device)
     if args.reload:
         if os.path.exists(os.path.join(args.savefile, "best_score_model.pth")):
@@ -87,7 +109,7 @@ def main(args):
     
     # Split the dataset into train, validation, and test sets
     data_path = args.data_dir
-    dataset = PAIPTrans(data_path, args.resolution, fixed_length=args.fixed_length, patch_size=patch_size, normalize=False)
+    dataset = PAIPAP(data_path, args.resolution, fixed_length=args.fixed_length, patch_size=patch_size, normalize=False)
     dataset_size = len(dataset)
     train_size = int(0.85 * dataset_size)
     val_size = dataset_size - train_size
@@ -98,7 +120,6 @@ def main(args):
     val_indices = list(range(train_size, dataset_size))
     train_set = Subset(dataset, train_indices)
     val_set = test_set = Subset(dataset, val_indices)
-    # train_set, val_set, test_set = random_split(dataset, [train_size, val_size, test_size])
 
     train_loader = DataLoader(train_set, batch_size=args.batch_size, num_workers=0, shuffle=True)
     val_loader = DataLoader(val_set, batch_size=args.batch_size, shuffle=False)
@@ -110,15 +131,14 @@ def main(args):
     val_losses = []
     output_dir = args.savefile  # Change this to the desired directory
     os.makedirs(output_dir, exist_ok=True)
-    import time
-    import random
+
     for epoch in range(num_epochs):
         model.train()
         epoch_train_loss = 0.0
         start_time = time.time()
         for batch in train_loader:
             # with torch.autocast(device_type='cuda', dtype=torch.float16):
-            _, qimages, _, qmasks, _, qdt_value = batch
+            _, qimages, _, qmasks, _ = batch
             qimages = torch.reshape(qimages,shape=(-1,3,patch_size*sqrt_len, patch_size*sqrt_len))
             qmasks = torch.reshape(qmasks,shape=(-1,num_class,patch_size*sqrt_len, patch_size*sqrt_len))
             qimages, qmasks = qimages.to(device), qmasks.to(device)  # Move data to GPU
@@ -148,7 +168,7 @@ def main(args):
         with torch.no_grad():
             for bi,batch in enumerate(val_loader):
                 # with torch.autocast(device_type='cuda', dtype=torch.float16):
-                image, qimages, mask, qmasks, qdt_info, qdt_value = batch
+                image, qimages, mask, qmasks, qdt_info = batch
                 seq_shape = qmasks.shape
                 qimages = torch.reshape(qimages,shape=(-1,3,patch_size*sqrt_len, patch_size*sqrt_len))
                 qmasks = torch.reshape(qmasks,shape=(-1,num_class,patch_size*sqrt_len, patch_size*sqrt_len))
@@ -156,13 +176,13 @@ def main(args):
                 outputs = model(qimages)
                 loss = criterion(outputs, qmasks)
                 score = dice_score(outputs, qmasks)
-                if  (epoch - 1) % 10 == 9:  # Adjust the frequency of visualization
-                    outputs = torch.reshape(outputs, seq_shape)
-                    qmasks = torch.reshape(qmasks, seq_shape)
-                    qdt_score, qmask_score = sub_trans_plot(image, mask, qmasks=qmasks, pred_mask=outputs, qdt_info=qdt_info, 
-                                               fixed_length=args.fixed_length, bi=bi, epoch=epoch, output_dir=args.savefile)
-                    epoch_qdt_score += qdt_score.item()
-                    epoch_qmask_score += qmask_score.item()
+                # if  (epoch - 1) % 10 == 9:  # Adjust the frequency of visualization
+                #     outputs = torch.reshape(outputs, seq_shape)
+                #     qmasks = torch.reshape(qmasks, seq_shape)
+                    # qdt_score, qmask_score = sub_trans_plot(image, mask, qmasks=qmasks, pred_mask=outputs, qdt_info=qdt_info, 
+                    #                            fixed_length=args.fixed_length, bi=bi, epoch=epoch, output_dir=args.savefile)
+                    # epoch_qdt_score += qdt_score.item()
+                    # epoch_qmask_score += qmask_score.item()
                 epoch_val_loss += loss.item()
                 epoch_val_score += score.item()
 
@@ -205,7 +225,6 @@ def main(args):
     test_loss /= len(test_loader)
     epoch_test_score /= len(test_loader)
     logging.info(f"Test Loss: {test_loss:.4f}, Test Score: {epoch_test_score:.4f}")
-    draw_loss(output_dir=output_dir)
 
 def sub_trans_plot(image, mask, qmasks, pred_mask, qdt_info, fixed_length, bi, epoch, output_dir):
     true_score = 0 
@@ -273,23 +292,23 @@ def sub_trans_plot(image, mask, qmasks, pred_mask, qdt_info, fixed_length, bi, e
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--dataset', type=str,  default="paip", help='name of the dataset.')
-    parser.add_argument('--data_dir', default="./dataset/paip/output_images_and_masks", 
+    parser.add_argument('--data_dir', default="../dataset/paip/output_images_and_masks", 
                         help='base path of dataset.')
-    parser.add_argument('--resolution', default=512, type=int,
+    parser.add_argument('--resolution', default=8192, type=int,
                         help='resolution of img.')
-    parser.add_argument('--fixed_length', default=512, type=int,
+    parser.add_argument('--fixed_length', default=1024, type=int,
                         help='length of sequence.')
-    parser.add_argument('--patch_size', default=8, type=int,
+    parser.add_argument('--patch_size', default=16, type=int,
                         help='patch size.')
-    parser.add_argument('--pretrain', default="sam", type=str,
+    parser.add_argument('--pretrain', default="sam-b", type=str,
                         help='Use SAM pretrained weigths.')
     parser.add_argument('--reload', default=True, type=bool,
                         help='Use SAM pretrained weigths.')
     parser.add_argument('--epoch', default=10, type=int,
                         help='Epoch of training.')
-    parser.add_argument('--batch_size', default=4, type=int,
+    parser.add_argument('--batch_size', default=32, type=int,
                         help='Batch_size for training')
-    parser.add_argument('--savefile', default="./sam-trans",
+    parser.add_argument('--savefile', default="./sam-paip-ap",
                         help='save visualized and loss filename')
     args = parser.parse_args()
 
