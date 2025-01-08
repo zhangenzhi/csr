@@ -138,7 +138,7 @@ if __name__ == '__main__':
                         help='Use SAM pretrained weigths.')
     parser.add_argument('--epoch', default=10, type=int,
                         help='Epoch of training.')
-    parser.add_argument('--batch_size', default=32, type=int,
+    parser.add_argument('--batch_size', default=2, type=int,
                         help='Batch_size for training')
     parser.add_argument('--savefile', default="./sam-s8d-ap",
                         help='save visualized and loss filename')
