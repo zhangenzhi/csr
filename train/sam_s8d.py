@@ -125,7 +125,7 @@ def main(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--dataset', type=str,  default="paip", help='name of the dataset.')
-    parser.add_argument('--data_dir', default="../dataset/paip/output_images_and_masks", 
+    parser.add_argument('--data_dir', default="../dataset/s8d", 
                         help='base path of dataset.')
     parser.add_argument('--resolution', default=8192, type=int,
                         help='resolution of img.')
