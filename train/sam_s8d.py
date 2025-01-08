@@ -116,7 +116,9 @@ def main(args):
         for batch in train_loader:
             # with torch.autocast(device_type='cuda', dtype=torch.float16):
             image, seq_img = batch
-            seq_img = torch.reshape(seq_img,shape=(-1,1,patch_size*sqrt_len, patch_size*sqrt_len))
+            import pdb
+            pdb.set_trace()
+            seq_img = torch.reshape(seq_img,shape=(-1,1, patch_size*sqrt_len, patch_size*sqrt_len))
             seq_img = seq_img.to(device)  # Move data to GPU
         
             outputs = model(seq_img)
