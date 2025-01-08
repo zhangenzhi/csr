@@ -41,12 +41,21 @@ class S8D(Dataset):
         return img, edge
     
 class S8DAP(Dataset):
-    def __init__(self, data_dir, resolution, fixed_length=1024, sths=[0,1,3,5,7], cannys=[50, 100], patch_size=16):
+    def __init__(self, data_dir, resolution, fixed_length=1024, sths=[0,1,3,5,7], cannys=[50, 100], patch_size=16, ):
         self.data_dir = data_dir
         self.resolution = resolution
         self.image_filenames = []
         self.patchify = ImagePatchify(sths=sths, fixed_length=fixed_length, cannys=cannys, patch_size=patch_size, num_channels=1)
 
+        self.transform =  transforms.Compose([
+            transforms.Resize([resolution,resolution]),
+            transforms.ToTensor(),
+        ])
+        
+        self.seq_transform = transforms.Compose([
+            transforms.ToTensor(),
+        ])
+        
         for i in range(len(os.listdir(data_dir))):
             sample_name = f"volume_{str(i).zfill(3)}.raw"
             image_path = os.path.join(data_dir, sample_name)
@@ -62,6 +71,11 @@ class S8DAP(Dataset):
         image = np.fromfile(file, dtype=np.uint16).reshape([self.resolution, self.resolution, 1])
         image = (image[:] / 255).astype(np.uint8)
         seq_img, seq_size, _ = self.patchify(image)
+        
+        seq_img = self.seq_transform(seq_img)
+        # Apply transformations
+        if self.transform:
+            image = self.transform(image)
 
         return image, seq_img
 
