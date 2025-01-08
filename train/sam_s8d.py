@@ -140,7 +140,7 @@ if __name__ == '__main__':
                         help='Epoch of training.')
     parser.add_argument('--batch_size', default=32, type=int,
                         help='Batch_size for training')
-    parser.add_argument('--savefile', default="./sam-paip-ap",
+    parser.add_argument('--savefile', default="./sam-s8d",
                         help='save visualized and loss filename')
     args = parser.parse_args()
 
