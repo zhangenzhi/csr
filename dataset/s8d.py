@@ -72,9 +72,9 @@ class S8DAP(Dataset):
         seq_img, seq_size, _ = self.patchify(image)
         
         seq_img = self.seq_transform(seq_img)
-        # Apply transformations
-        if self.transform:
-            image = self.transform(image)
+        # # Apply transformations
+        # if self.transform:
+        #     image = self.transform(image)
 
         return image, seq_img
 

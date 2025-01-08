@@ -118,9 +118,9 @@ def main(args):
             image, seq_img = batch
             seq_img = torch.reshape(seq_img,shape=(-1,1, patch_size*sqrt_len, patch_size*sqrt_len))
             seq_img = seq_img.to(device)  # Move data to GPU
-        
+            print("seq_img:", seq_img.shape)
             outputs = model(seq_img)
-            print(outputs.shape)
+            print("outputs:", outputs.shape)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
