@@ -48,7 +48,7 @@ class S8DAP(Dataset):
         self.patchify = ImagePatchify(sths=sths, fixed_length=fixed_length, cannys=cannys, patch_size=patch_size, num_channels=1)
 
         self.transform =  transforms.Compose([
-            transforms.Resize([resolution,resolution]),
+            # transforms.Resize([resolution,resolution]),
             transforms.ToTensor(),
         ])
         
